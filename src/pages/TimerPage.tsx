@@ -2,10 +2,16 @@ import { Pause, Play, Settings, SkipForward } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import type { useTimer } from '@/hooks/useTimer'
+import { type DaySummary, formatDuration } from '@/lib/sessions'
 import { THEME } from '@/theme'
 import { formatClock } from '@/lib/timer'
 
-export function TimerPage({ timer }: { timer: ReturnType<typeof useTimer> }) {
+interface Props {
+  timer: ReturnType<typeof useTimer>
+  today: DaySummary
+}
+
+export function TimerPage({ timer, today }: Props) {
   const navigate = useNavigate()
   const theme = THEME[timer.phase]
   const clock = formatClock(timer.remainingMs)
@@ -62,6 +68,15 @@ export function TimerPage({ timer }: { timer: ReturnType<typeof useTimer> }) {
           Skip
         </Button>
       </div>
+
+      <dl className={`absolute bottom-4 left-4 text-sm ${theme.muted}`}>
+        <dt className="text-xs tracking-widest uppercase">Today</dt>
+        <dd className="mt-1 tabular-nums">
+          {today.completedCount} {today.completedCount === 1 ? 'completed session' : 'completed sessions'}
+          <span aria-hidden className="mx-1.5">·</span>
+          {formatDuration(today.focusedMs)} focused
+        </dd>
+      </dl>
     </main>
   )
 }

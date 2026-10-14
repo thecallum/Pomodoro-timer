@@ -1,9 +1,12 @@
 import { useEffect, useReducer, useState } from 'react'
 import { alertPhaseComplete, prepareAlerts } from '@/lib/alerts'
+import type { SessionRecord } from '@/lib/sessions'
 import type { Settings } from '@/lib/settings'
 import {
   type TimerState,
   complete,
+  elapsedMs,
+  phaseDurationMs,
   isFinished,
   statusOf,
   isRunning,
@@ -32,15 +35,28 @@ function reducer(state: TimerState, action: Action): TimerState {
   }
 }
 
+function completedSession(state: TimerState, settings: Settings): SessionRecord {
+  const endedAt = state.endsAt!
+  return {
+    id: `completed-${endedAt}`,
+    endedAt,
+    focusedMs: state.durationMs ?? phaseDurationMs(state.phase, settings),
+    completed: true,
+  }
+}
+
 /**
  * Changed durations apply from the next time a phase is started: a running or
  * paused phase keeps the time it already has.
  */
-export function useTimer(settings: Settings) {
+export function useTimer(settings: Settings, onSession: (session: SessionRecord) => void) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const saved = loadTimerState()
     // A phase that expired while the app was closed just rolls over to the next one.
-    return isFinished(saved, Date.now()) ? complete(saved) : saved
+    if (!isFinished(saved, Date.now())) return saved
+    // Safe to repeat (StrictMode runs initializers twice): records are deduplicated by id.
+    if (saved.phase === 'focus') onSession(completedSession(saved, settings))
+    return complete(saved)
   })
   const [now, setNow] = useState(() => Date.now())
 
@@ -52,12 +68,13 @@ export function useTimer(settings: Settings) {
       const t = Date.now()
       if (isFinished(state, t)) {
         dispatch({ type: 'complete' })
+        if (state.phase === 'focus') onSession(completedSession(state, settings))
         alertPhaseComplete(state.phase)
       }
       setNow(t)
     }, 250)
     return () => clearInterval(id)
-  }, [state])
+  }, [state, settings, onSession])
 
   return {
     phase: state.phase,
@@ -75,6 +92,14 @@ export function useTimer(settings: Settings) {
       dispatch({ type: 'pause', now: t })
     },
     // Skipping moves on silently; only a phase running out sounds the alert.
-    skip: () => dispatch({ type: 'skip' }),
+    // A skipped focus session still logs the time actually spent on it.
+    skip: () => {
+      const t = Date.now()
+      const elapsed = elapsedMs(state, t, settings)
+      if (state.phase === 'focus' && elapsed >= 1000) {
+        onSession({ id: `skipped-${t}`, endedAt: t, focusedMs: elapsed, completed: false })
+      }
+      dispatch({ type: 'skip' })
+    },
   }
 }

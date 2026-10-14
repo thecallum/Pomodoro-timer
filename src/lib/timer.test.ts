@@ -3,6 +3,7 @@ import type { Settings } from './settings'
 import {
   INITIAL_STATE,
   complete,
+  elapsedMs,
   formatClock,
   isFinished,
   remainingMs,
@@ -40,11 +41,11 @@ describe('timer', () => {
 
   it('moves to an idle break after focus, then back to focus', () => {
     const afterFocus = complete(start(INITIAL_STATE, 0, SETTINGS))
-    expect(afterFocus).toEqual({ phase: 'break', endsAt: null, pausedRemainingMs: null })
+    expect(afterFocus).toEqual({ phase: 'break', endsAt: null, pausedRemainingMs: null, durationMs: null })
     expect(remainingMs(afterFocus, 0, SETTINGS)).toBe(5 * MIN)
 
     const afterBreak = complete(start(afterFocus, 0, SETTINGS))
-    expect(afterBreak).toEqual({ phase: 'focus', endsAt: null, pausedRemainingMs: null })
+    expect(afterBreak).toEqual({ phase: 'focus', endsAt: null, pausedRemainingMs: null, durationMs: null })
   })
 
   it('pauses with the remaining time frozen, and resumes from it', () => {
@@ -76,5 +77,19 @@ describe('timer', () => {
     expect(formatClock(61_000)).toBe('01:01')
     expect(formatClock(500)).toBe('00:01')
     expect(formatClock(0)).toBe('00:00')
+  })
+
+  it('tracks elapsed time excluding pauses, using the duration it started with', () => {
+    expect(elapsedMs(INITIAL_STATE, 0, SETTINGS)).toBe(0)
+
+    const running = start(INITIAL_STATE, 0, SETTINGS)
+    expect(elapsedMs(running, 10 * MIN, SETTINGS)).toBe(10 * MIN)
+
+    const paused = pause(running, 10 * MIN)
+    expect(elapsedMs(paused, 50 * MIN, SETTINGS)).toBe(10 * MIN)
+
+    // Changing settings mid-session doesn't change what this session was.
+    const changed: Settings = { focusMinutes: 50, breakMinutes: 5 }
+    expect(elapsedMs(paused, 50 * MIN, changed)).toBe(10 * MIN)
   })
 })

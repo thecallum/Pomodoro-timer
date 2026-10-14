@@ -11,11 +11,12 @@ export interface TimerState {
   phase: Phase
   endsAt: number | null // set only while running
   pausedRemainingMs: number | null // set only while paused
+  durationMs: number | null // length of the phase when it was started; null while idle
 }
 
 export type Status = 'idle' | 'running' | 'paused'
 
-export const INITIAL_STATE: TimerState = { phase: 'focus', endsAt: null, pausedRemainingMs: null }
+export const INITIAL_STATE: TimerState = { phase: 'focus', endsAt: null, pausedRemainingMs: null, durationMs: null }
 
 export function phaseDurationMs(phase: Phase, settings: Settings): number {
   const minutes = phase === 'focus' ? settings.focusMinutes : settings.breakMinutes
@@ -38,8 +39,10 @@ export function start(state: TimerState, now: number, settings: Settings): Timer
       return state
     case 'paused':
       return { ...state, endsAt: now + state.pausedRemainingMs!, pausedRemainingMs: null }
-    case 'idle':
-      return { ...state, endsAt: now + phaseDurationMs(state.phase, settings) }
+    case 'idle': {
+      const durationMs = phaseDurationMs(state.phase, settings)
+      return { ...state, endsAt: now + durationMs, durationMs }
+    }
   }
 }
 
@@ -53,6 +56,13 @@ export function remainingMs(state: TimerState, now: number, settings: Settings):
   return state.pausedRemainingMs ?? phaseDurationMs(state.phase, settings)
 }
 
+/** Time actually spent in the current phase, excluding paused time. */
+export function elapsedMs(state: TimerState, now: number, settings: Settings): number {
+  if (statusOf(state) === 'idle') return 0
+  const duration = state.durationMs ?? phaseDurationMs(state.phase, settings)
+  return Math.min(duration, Math.max(0, duration - remainingMs(state, now, settings)))
+}
+
 export function isFinished(state: TimerState, now: number): boolean {
   return state.endsAt !== null && now >= state.endsAt
 }
@@ -62,7 +72,12 @@ export function isFinished(state: TimerState, now: number): boolean {
  * a phase runs out and when the user skips it.
  */
 export function complete(state: TimerState): TimerState {
-  return { phase: state.phase === 'focus' ? 'break' : 'focus', endsAt: null, pausedRemainingMs: null }
+  return {
+    phase: state.phase === 'focus' ? 'break' : 'focus',
+    endsAt: null,
+    pausedRemainingMs: null,
+    durationMs: null,
+  }
 }
 
 export function formatClock(ms: number): string {
@@ -83,7 +98,11 @@ export function loadTimerState(): TimerState {
     const endsAt = typeof parsed.endsAt === 'number' ? parsed.endsAt : null
     const pausedRemainingMs =
       endsAt === null && typeof parsed.pausedRemainingMs === 'number' ? parsed.pausedRemainingMs : null
-    return { phase, endsAt, pausedRemainingMs }
+    const durationMs =
+      (endsAt !== null || pausedRemainingMs !== null) && typeof parsed.durationMs === 'number'
+        ? parsed.durationMs
+        : null
+    return { phase, endsAt, pausedRemainingMs, durationMs }
   } catch {
     return INITIAL_STATE
   }
