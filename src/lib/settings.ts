@@ -4,8 +4,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  focusMinutes: 25,
-  breakMinutes: 5,
+  focusMinutes: 1,
+  breakMinutes: 1,
 }
 
 const STORAGE_KEY = 'pomodoro:settings'
