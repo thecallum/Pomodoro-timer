@@ -5,15 +5,20 @@ import {
   type TimerState,
   complete,
   isFinished,
+  statusOf,
   isRunning,
   loadTimerState,
   remainingMs,
-  reset,
+  pause,
   saveTimerState,
   start,
 } from '@/lib/timer'
 
-type Action = { type: 'start'; now: number } | { type: 'reset' } | { type: 'complete' }
+type Action =
+  | { type: 'start'; now: number }
+  | { type: 'pause'; now: number }
+  | { type: 'skip' }
+  | { type: 'complete' }
 
 // Settings have no UI yet; a future settings screen can lift this into state.
 const settings = loadSettings()
@@ -22,8 +27,9 @@ function reducer(state: TimerState, action: Action): TimerState {
   switch (action.type) {
     case 'start':
       return start(state, action.now, settings)
-    case 'reset':
-      return reset()
+    case 'pause':
+      return pause(state, action.now)
+    case 'skip':
     case 'complete':
       return complete(state)
   }
@@ -54,7 +60,7 @@ export function useTimer() {
 
   return {
     phase: state.phase,
-    running: isRunning(state),
+    status: statusOf(state),
     remainingMs: remainingMs(state, now, settings),
     start: () => {
       prepareAlerts()
@@ -62,6 +68,12 @@ export function useTimer() {
       setNow(t)
       dispatch({ type: 'start', now: t })
     },
-    reset: () => dispatch({ type: 'reset' }),
+    pause: () => {
+      const t = Date.now()
+      setNow(t)
+      dispatch({ type: 'pause', now: t })
+    },
+    // Skipping moves on silently; only a phase running out sounds the alert.
+    skip: () => dispatch({ type: 'skip' }),
   }
 }
