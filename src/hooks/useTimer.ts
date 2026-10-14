@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from 'react'
 import { alertPhaseComplete, prepareAlerts } from '@/lib/alerts'
-import { loadSettings } from '@/lib/settings'
+import type { Settings } from '@/lib/settings'
 import {
   type TimerState,
   complete,
@@ -15,18 +15,15 @@ import {
 } from '@/lib/timer'
 
 type Action =
-  | { type: 'start'; now: number }
+  | { type: 'start'; now: number; settings: Settings }
   | { type: 'pause'; now: number }
   | { type: 'skip' }
   | { type: 'complete' }
 
-// Settings have no UI yet; a future settings screen can lift this into state.
-const settings = loadSettings()
-
 function reducer(state: TimerState, action: Action): TimerState {
   switch (action.type) {
     case 'start':
-      return start(state, action.now, settings)
+      return start(state, action.now, action.settings)
     case 'pause':
       return pause(state, action.now)
     case 'skip':
@@ -35,7 +32,11 @@ function reducer(state: TimerState, action: Action): TimerState {
   }
 }
 
-export function useTimer() {
+/**
+ * Changed durations apply from the next time a phase is started: a running or
+ * paused phase keeps the time it already has.
+ */
+export function useTimer(settings: Settings) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const saved = loadTimerState()
     // A phase that expired while the app was closed just rolls over to the next one.
@@ -66,7 +67,7 @@ export function useTimer() {
       prepareAlerts()
       const t = Date.now()
       setNow(t)
-      dispatch({ type: 'start', now: t })
+      dispatch({ type: 'start', now: t, settings })
     },
     pause: () => {
       const t = Date.now()

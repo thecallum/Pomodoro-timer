@@ -4,8 +4,18 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  focusMinutes: 1,
-  breakMinutes: 1,
+  focusMinutes: 25,
+  breakMinutes: 5,
+}
+
+export const MIN_MINUTES = 1
+export const MAX_MINUTES = 180
+
+/** Parse user input as a whole number of minutes, or null if it isn't valid. */
+export function parseMinutes(input: string): number | null {
+  if (!/^\d+$/.test(input.trim())) return null
+  const minutes = Number(input)
+  return minutes >= MIN_MINUTES && minutes <= MAX_MINUTES ? minutes : null
 }
 
 const STORAGE_KEY = 'pomodoro:settings'
