@@ -25,9 +25,9 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 ### settings.ts
 - [x] `parseMinutes`: valid and invalid inputs
 - [x] `loadSettings`: missing fields use defaults, volume clamped, unknown sound rejected
-- [ ] `parseMinutes`: leading zeros (`'007'`)
 - [ ] `loadSettings`: empty storage, invalid JSON, non-numeric or negative minutes, NaN/Infinity, volume rounding and negative volume
-- [ ] `saveSettings` / `loadSettings` round trip
+- [x] `saveSettings`: writes JSON under `pomodoro:settings`
+- [ ] `saveSettings` / `loadSettings` round trip (integration, not a unit test)
 
 ### sessions.ts
 - [x] `addRecord`: dedupes by id

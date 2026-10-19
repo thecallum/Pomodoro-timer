@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_SETTINGS, loadSettings, parseMinutes } from './settings'
+import { DEFAULT_SETTINGS, loadSettings, parseMinutes, saveSettings } from './settings'
 
 describe('parseMinutes', () => {
   it.each([
@@ -46,5 +46,21 @@ describe('loadSettings', () => {
   it('rejects unknown sounds', () => {
     seed({ sound: 'kazoo' })
     expect(loadSettings().sound).toBe(DEFAULT_SETTINGS.sound)
+  })
+})
+
+describe('saveSettings', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('writes the settings as JSON under the pomodoro:settings key', () => {
+    const setItem = vi.fn()
+    vi.stubGlobal('localStorage', { setItem })
+    const settings = { focusMinutes: 30, breakMinutes: 10, volume: 40, sound: 'bell' as const }
+
+    saveSettings(settings)
+
+    expect(setItem).toHaveBeenCalledWith('pomodoro:settings', JSON.stringify(settings))
   })
 })
