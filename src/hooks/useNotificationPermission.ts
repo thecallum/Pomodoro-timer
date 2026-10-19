@@ -19,7 +19,7 @@ export function useNotificationPermission() {
         status = s
         s.addEventListener('change', sync)
       })
-      .catch(() => {})
+      .catch((error) => console.error('Failed to query notification permission:', error))
     return () => status?.removeEventListener('change', sync)
   }, [])
 

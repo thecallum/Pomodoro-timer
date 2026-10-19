@@ -57,7 +57,8 @@ export function loadRecords(): SessionRecord[] {
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
     return parsed.filter(isRecord)
-  } catch {
+  } catch (error) {
+    console.error('Failed to load sessions, starting with none:', error)
     return []
   }
 }

@@ -35,22 +35,29 @@ describe('summarizeDay', () => {
 })
 
 describe('addRecord', () => {
-  it('ignores a record whose id already exists', () => {
+  it('appends a record with a new id', () => {
     const first = record('a', at(9), 25 * MIN)
-    const once = addRecord([], first)
-    expect(addRecord(once, first)).toBe(once)
-    expect(addRecord(once, record('b', at(10), MIN))).toHaveLength(2)
+    const second = record('b', at(10), MIN)
+    expect(addRecord([first], second)).toEqual([first, second])
+  })
+
+  it('returns the same list when the id already exists', () => {
+    const first = record('a', at(9), 25 * MIN)
+    const records = [first]
+    expect(addRecord(records, first)).toBe(records)
   })
 })
 
 describe('formatDuration', () => {
-  it('scales from seconds to minutes to hours', () => {
-    expect(formatDuration(0)).toBe('0s')
-    expect(formatDuration(45_500)).toBe('45s')
-    expect(formatDuration(MIN)).toBe('1m 0s')
-    expect(formatDuration(5 * MIN + 12_000)).toBe('5m 12s')
-    expect(formatDuration(59 * MIN + 59_000)).toBe('59m 59s')
-    expect(formatDuration(75 * MIN + 30_000)).toBe('1h 15m')
-    expect(formatDuration(120 * MIN)).toBe('2h 0m')
+  it.each([
+    [0, '0s'],
+    [45_500, '45s'],
+    [MIN, '1m 0s'],
+    [5 * MIN + 12_000, '5m 12s'],
+    [59 * MIN + 59_000, '59m 59s'],
+    [75 * MIN + 30_000, '1h 15m'],
+    [120 * MIN, '2h 0m'],
+  ])('formats %i ms as %s', (ms, expected) => {
+    expect(formatDuration(ms)).toBe(expected)
   })
 })
