@@ -32,8 +32,10 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] `addRecord`: dedupes by id
 - [x] `summarizeDay`: day boundaries, skipped sessions count time but not completions, empty
 - [x] `formatDuration`: unit scaling
-- [ ] `loadRecords`: empty storage, invalid JSON, not an array, malformed entries filtered out
-- [ ] `saveRecords` / `loadRecords` round trip
+- [x] `loadRecords`: empty storage, unreadable data (logged), not an array, restores saved records
+- [ ] `loadRecords`: malformed entries filtered out
+- [x] `saveRecords`: writes JSON under `pomodoro:sessions`
+- [ ] `saveRecords` / `loadRecords` round trip (integration, not a unit test)
 - [ ] `summarizeDay`: day argument at different times of day gives the same day
 
 ### appearance.ts

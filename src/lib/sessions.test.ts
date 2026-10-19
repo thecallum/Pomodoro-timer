@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { type SessionRecord, addRecord, formatDuration, summarizeDay } from './sessions'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  type SessionRecord,
+  addRecord,
+  formatDuration,
+  loadRecords,
+  saveRecords,
+  summarizeDay,
+} from './sessions'
 
 const MIN = 60_000
 const at = (h: number, m = 0, d = 14) => new Date(2026, 9, d, h, m).getTime()
@@ -59,5 +66,56 @@ describe('formatDuration', () => {
     [120 * MIN, '2h 0m'],
   ])('formats %i ms as %s', (ms, expected) => {
     expect(formatDuration(ms)).toBe(expected)
+  })
+})
+
+describe('loadRecords', () => {
+  const seed = (raw: string | null) => {
+    vi.stubGlobal('localStorage', { getItem: () => raw })
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('returns an empty list when nothing is saved', () => {
+    seed(null)
+    expect(loadRecords()).toEqual([])
+  })
+
+  it('returns an empty list and logs the error when the saved data cannot be read', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    seed('{not json')
+
+    expect(loadRecords()).toEqual([])
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+
+  it('returns an empty list when the saved data is not an array', () => {
+    seed(JSON.stringify({ id: 'a' }))
+    expect(loadRecords()).toEqual([])
+  })
+
+  it('restores saved records', () => {
+    const records = [record('a', at(9), 25 * MIN), record('b', at(10), 10 * MIN, false)]
+    seed(JSON.stringify(records))
+    expect(loadRecords()).toEqual(records)
+  })
+})
+
+describe('saveRecords', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('writes the records as JSON under the pomodoro:sessions key', () => {
+    const setItem = vi.fn()
+    vi.stubGlobal('localStorage', { setItem })
+    const records = [record('a', at(9), 25 * MIN)]
+
+    saveRecords(records)
+
+    expect(setItem).toHaveBeenCalledWith('pomodoro:sessions', JSON.stringify(records))
   })
 })
