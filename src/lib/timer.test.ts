@@ -7,6 +7,7 @@ import {
   formatClock,
   isFinished,
   isRunning,
+  loadTimerState,
   remainingMs,
   pause,
   phaseDurationMs,
@@ -220,5 +221,62 @@ describe('saveTimerState', () => {
     saveTimerState(paused)
 
     expect(setItem).toHaveBeenCalledWith('pomodoro:timer', JSON.stringify(paused))
+  })
+})
+
+describe('loadTimerState', () => {
+  const seed = (value: unknown) => {
+    const raw = typeof value === 'string' ? value : JSON.stringify(value)
+    vi.stubGlobal('localStorage', { getItem: () => raw })
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('returns the initial state when nothing is saved', () => {
+    vi.stubGlobal('localStorage', { getItem: () => null })
+    expect(loadTimerState()).toEqual(INITIAL_STATE)
+  })
+
+  it('returns the initial state and logs the error when the saved data cannot be read', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    seed('{not json')
+
+    expect(loadTimerState()).toEqual(INITIAL_STATE)
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+
+  it('restores a running state', () => {
+    const saved = { phase: 'focus', endsAt: 5000, pausedRemainingMs: null, durationMs: 1500 }
+    seed(saved)
+    expect(loadTimerState()).toEqual(saved)
+  })
+
+  it('restores a paused state', () => {
+    const saved = { phase: 'break', endsAt: null, pausedRemainingMs: 3000, durationMs: 5000 }
+    seed(saved)
+    expect(loadTimerState()).toEqual(saved)
+  })
+
+  it('falls back to focus for an unknown phase', () => {
+    seed({ phase: 'nap' })
+    expect(loadTimerState().phase).toBe('focus')
+  })
+
+  it('drops pausedRemainingMs when endsAt is set, since the timer is running', () => {
+    seed({ phase: 'focus', endsAt: 5000, pausedRemainingMs: 3000, durationMs: 1500 })
+    expect(loadTimerState().pausedRemainingMs).toBeNull()
+  })
+
+  it('drops durationMs when the timer is idle', () => {
+    seed({ phase: 'focus', endsAt: null, pausedRemainingMs: null, durationMs: 1500 })
+    expect(loadTimerState().durationMs).toBeNull()
+  })
+
+  it('treats values of the wrong type as missing', () => {
+    seed({ phase: 'focus', endsAt: 'soon', pausedRemainingMs: '3000', durationMs: '1500' })
+    expect(loadTimerState()).toEqual(INITIAL_STATE)
   })
 })

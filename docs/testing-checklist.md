@@ -13,13 +13,14 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] `complete`: focus to break and back, ends idle
 - [x] `formatClock`: rounds partial seconds up, zero-pads
 - [x] `statusOf`: idle, running, paused
-- [ ] `isRunning`: true only when running
+- [x] `isRunning`: true only when running
 - [x] `phaseDurationMs`: focus vs break
-- [ ] `pause` with `now` past `endsAt` clamps remaining to 0
+- [x] `pause` with `now` past `endsAt` clamps remaining to 0
 - [x] `formatClock` with 1h+ values (180 min gives `180:00`)
-- [ ] `loadTimerState`: empty storage, invalid JSON, unknown phase falls back to focus
-- [ ] `loadTimerState`: ignores `pausedRemainingMs` when `endsAt` is set; ignores `durationMs` when idle
-- [ ] `saveTimerState` / `loadTimerState` round trip
+- [x] `loadTimerState`: empty storage, unreadable data (logged), unknown phase falls back to focus
+- [x] `loadTimerState`: restores running and paused states; ignores `pausedRemainingMs` when `endsAt` is set; ignores `durationMs` when idle; wrong types treated as missing
+- [x] `saveTimerState`: writes JSON under `pomodoro:timer`
+- [ ] `saveTimerState` / `loadTimerState` round trip (integration, not a unit test)
 
 ### settings.ts
 - [x] `parseMinutes`: valid and invalid inputs

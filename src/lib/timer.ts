@@ -110,7 +110,8 @@ export function loadTimerState(): TimerState {
         ? parsed.durationMs
         : null
     return { phase, endsAt, pausedRemainingMs, durationMs }
-  } catch {
+  } catch (error) {
+    console.error('Failed to load timer state, starting fresh:', error)
     return INITIAL_STATE
   }
 }
