@@ -69,7 +69,7 @@ export function useTimer(settings: Settings, onSession: (session: SessionRecord)
       if (isFinished(state, t)) {
         dispatch({ type: 'complete' })
         if (state.phase === 'focus') onSession(completedSession(state, settings))
-        alertPhaseComplete(state.phase)
+        alertPhaseComplete(state.phase, settings)
       }
       setNow(t)
     }, 250)

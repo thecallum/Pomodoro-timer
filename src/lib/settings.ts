@@ -1,11 +1,19 @@
+export const SOUND_IDS = ['chime', 'bell', 'beep', 'pop', 'marimba', 'alarm'] as const
+export type SoundId = (typeof SOUND_IDS)[number]
+
 export interface Settings {
   focusMinutes: number
   breakMinutes: number
+  /** Alert volume, 0-100. */
+  volume: number
+  sound: SoundId
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   focusMinutes: 25,
   breakMinutes: 5,
+  volume: 70,
+  sound: 'chime',
 }
 
 export const MIN_MINUTES = 1
@@ -28,6 +36,10 @@ export function loadSettings(): Settings {
     return {
       focusMinutes: positiveOr(parsed.focusMinutes, DEFAULT_SETTINGS.focusMinutes),
       breakMinutes: positiveOr(parsed.breakMinutes, DEFAULT_SETTINGS.breakMinutes),
+      volume: volumeOr(parsed.volume, DEFAULT_SETTINGS.volume),
+      sound: SOUND_IDS.includes(parsed.sound as SoundId)
+        ? (parsed.sound as SoundId)
+        : DEFAULT_SETTINGS.sound,
     }
   } catch {
     return DEFAULT_SETTINGS
@@ -41,5 +53,11 @@ export function saveSettings(settings: Settings): void {
 function positiveOr(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0
     ? value
+    : fallback
+}
+
+function volumeOr(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(100, Math.max(0, Math.round(value)))
     : fallback
 }

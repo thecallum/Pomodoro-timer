@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Settings } from './settings'
+import { DEFAULT_SETTINGS, type Settings } from './settings'
 import {
   INITIAL_STATE,
   complete,
@@ -13,7 +13,7 @@ import {
 } from './timer'
 
 const MIN = 60_000
-const SETTINGS: Settings = { focusMinutes: 25, breakMinutes: 5 }
+const SETTINGS: Settings = { ...DEFAULT_SETTINGS, focusMinutes: 25, breakMinutes: 5 }
 
 describe('timer', () => {
   it('starts a focus session of the configured length', () => {
@@ -89,7 +89,7 @@ describe('timer', () => {
     expect(elapsedMs(paused, 50 * MIN, SETTINGS)).toBe(10 * MIN)
 
     // Changing settings mid-session doesn't change what this session was.
-    const changed: Settings = { focusMinutes: 50, breakMinutes: 5 }
+    const changed: Settings = { ...SETTINGS, focusMinutes: 50 }
     expect(elapsedMs(paused, 50 * MIN, changed)).toBe(10 * MIN)
   })
 })
