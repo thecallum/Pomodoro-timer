@@ -33,6 +33,19 @@ describe('loadSettings', () => {
     vi.restoreAllMocks()
   })
 
+  it('returns the defaults when nothing is saved', () => {
+    vi.stubGlobal('localStorage', { getItem: () => null })
+    expect(loadSettings()).toEqual(DEFAULT_SETTINGS)
+  })
+
+  it('returns the defaults and logs the error when the saved data cannot be read', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('localStorage', { getItem: () => '{not json' })
+
+    expect(loadSettings()).toEqual(DEFAULT_SETTINGS)
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+
   it('falls back to defaults for settings saved before sound options existed', () => {
     seed({ focusMinutes: 30, breakMinutes: 10 })
     expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, focusMinutes: 30, breakMinutes: 10 })

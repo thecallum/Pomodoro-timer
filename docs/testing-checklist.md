@@ -24,8 +24,7 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 
 ### settings.ts
 - [x] `parseMinutes`: valid and invalid inputs
-- [x] `loadSettings`: missing fields use defaults, volume clamped, unknown sound rejected
-- [ ] `loadSettings`: empty storage, invalid JSON, non-numeric or negative minutes, NaN/Infinity, volume rounding and negative volume
+- [x] `loadSettings`: empty storage, unreadable data (logged), missing fields use defaults, volume clamped, unknown sound rejected
 - [x] `saveSettings`: writes JSON under `pomodoro:settings`
 - [ ] `saveSettings` / `loadSettings` round trip (integration, not a unit test)
 
