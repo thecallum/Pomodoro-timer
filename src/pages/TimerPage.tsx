@@ -25,21 +25,22 @@ export function TimerPage({ timer, today }: Props) {
 
   return (
     <main
-      className={`relative flex min-h-svh flex-col items-center justify-center gap-10 px-4 transition-colors duration-500 ${theme.page}`}
+      data-phase={timer.phase}
+      className="relative flex min-h-svh flex-col items-center justify-center gap-10 px-4 text-phase-text transition-colors duration-500"
     >
       <Button
         variant="ghost"
         size="icon-lg"
         aria-label="Settings"
         onClick={() => navigate('/settings')}
-        className="absolute top-4 right-4 hover:bg-black/5"
+        className="absolute top-4 right-4"
       >
         <Settings className="size-5" />
       </Button>
 
       <div className="text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{theme.heading}</h1>
-        <p className={`mt-1 text-sm ${theme.muted}`}>
+        <p className="mt-1 text-sm text-phase-muted">
           {timer.status === 'paused' ? 'Paused' : theme.hint}
         </p>
       </div>
@@ -54,14 +55,14 @@ export function TimerPage({ timer, today }: Props) {
       </p>
 
       <div className="flex items-center gap-3">
-        <Button size="lg" className={`h-12 w-40 gap-2 text-base ${theme.action}`} onClick={primary.onClick}>
+        <Button size="lg" className="h-12 w-40 gap-2 bg-phase-action text-base text-phase-action-foreground hover:bg-phase-action-hover" onClick={primary.onClick}>
           <PrimaryIcon className="size-5" />
           {primary.label}
         </Button>
         <Button
           variant="ghost"
           size="lg"
-          className="h-12 gap-2 px-4 text-base hover:bg-black/5"
+          className="h-12 gap-2 px-4 text-base"
           onClick={timer.skip}
         >
           <SkipForward className="size-5" />
@@ -69,7 +70,7 @@ export function TimerPage({ timer, today }: Props) {
         </Button>
       </div>
 
-      <dl className={`absolute bottom-4 left-4 text-sm ${theme.muted}`}>
+      <dl className="absolute bottom-4 left-4 text-sm text-phase-muted">
         <dt className="text-xs tracking-widest uppercase">Today</dt>
         <dd className="mt-1 tabular-nums">
           {today.completedCount} {today.completedCount === 1 ? 'completed session' : 'completed sessions'}

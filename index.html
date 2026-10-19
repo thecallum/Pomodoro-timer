@@ -8,6 +8,19 @@
     <meta name="theme-color" content="#ef4444" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pomodoro</title>
+    <script>
+      // Apply the saved appearance before first paint to avoid a flash of the wrong theme.
+      // Keep in sync with src/lib/appearance.ts and src/hooks/useAppearance.ts.
+      try {
+        var pref = localStorage.getItem('pomodoro:appearance')
+        var dark =
+          pref === 'dark' ||
+          (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', dark)
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        if (dark) document.querySelector('meta[name="theme-color"]').content = '#0a0a0a'
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

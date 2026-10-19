@@ -46,6 +46,11 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    --color-phase-text: var(--phase-text);
+    --color-phase-muted: var(--phase-muted);
+    --color-phase-action: var(--phase-action);
+    --color-phase-action-hover: var(--phase-action-hover);
+    --color-phase-action-foreground: var(--phase-action-foreground);
 }
 
 :root {
@@ -115,6 +120,39 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Phase accents: set on the timer page via data-phase, with softer shades in dark mode. */
+[data-phase='focus'] {
+    --phase-text: #460809;
+    --phase-muted: #7f1d1d99;
+    --phase-action: #ef4444;
+    --phase-action-hover: #dc2626;
+    --phase-action-foreground: #ffffff;
+}
+
+[data-phase='break'] {
+    --phase-text: #022c22;
+    --phase-muted: #064e3b99;
+    --phase-action: #059669;
+    --phase-action-hover: #047857;
+    --phase-action-foreground: #ffffff;
+}
+
+.dark [data-phase='focus'] {
+    --phase-text: #fee2e2;
+    --phase-muted: #fecaca99;
+    --phase-action: #f87171;
+    --phase-action-hover: #fca5a5;
+    --phase-action-foreground: #450a0a;
+}
+
+.dark [data-phase='break'] {
+    --phase-text: #d1fae5;
+    --phase-muted: #a7f3d099;
+    --phase-action: #34d399;
+    --phase-action-hover: #6ee7b7;
+    --phase-action-foreground: #022c22;
 }
 
 @layer base {
