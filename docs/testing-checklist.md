@@ -12,10 +12,11 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] `isFinished`: exact boundary at `endsAt`
 - [x] `complete`: focus to break and back, ends idle
 - [x] `formatClock`: rounds partial seconds up, zero-pads
-- [ ] `statusOf` / `isRunning`: idle, running, paused (only covered indirectly)
-- [ ] `phaseDurationMs`: focus vs break
+- [x] `statusOf`: idle, running, paused
+- [ ] `isRunning`: true only when running
+- [x] `phaseDurationMs`: focus vs break
 - [ ] `pause` with `now` past `endsAt` clamps remaining to 0
-- [ ] `formatClock` with 1h+ values (e.g. 90 min gives `90:00`)
+- [x] `formatClock` with 1h+ values (180 min gives `180:00`)
 - [ ] `loadTimerState`: empty storage, invalid JSON, unknown phase falls back to focus
 - [ ] `loadTimerState`: ignores `pausedRemainingMs` when `endsAt` is set; ignores `durationMs` when idle
 - [ ] `saveTimerState` / `loadTimerState` round trip

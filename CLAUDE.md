@@ -10,6 +10,10 @@
 
 - Always confirm the approach with the user before writing any code. Make sure you understand the requirements first, ask clarifying questions where details are unclear, and push back if something looks like a bad idea or conflicts with existing behaviour.
 
+## Errors
+
+- Don't swallow errors unnecessarily: observability matters. If an error has to be caught, catch it as specifically as possible, log it, and consider rethrowing it anyway.
+
 ## Tooling
 
 - Use pnpm (not npm or yarn).

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS, type Settings } from './settings'
 import {
   INITIAL_STATE,
@@ -6,9 +6,13 @@ import {
   elapsedMs,
   formatClock,
   isFinished,
+  isRunning,
   remainingMs,
   pause,
+  phaseDurationMs,
+  saveTimerState,
   start,
+  statusOf,
 } from './timer'
 
 const MIN = 60_000
@@ -16,6 +20,44 @@ const SETTINGS: Settings = { ...DEFAULT_SETTINGS, focusMinutes: 25, breakMinutes
 
 const running = start(INITIAL_STATE, 0, SETTINGS)
 const paused = pause(running, 10 * MIN)
+
+describe('statusOf', () => {
+  it('is running when endsAt is set', () => {
+    expect(statusOf(running)).toBe('running')
+  })
+
+  it('is paused when there is paused remaining time', () => {
+    expect(statusOf(paused)).toBe('paused')
+  })
+
+  it('is idle when there is neither', () => {
+    expect(statusOf(INITIAL_STATE)).toBe('idle')
+  })
+})
+
+describe('isRunning', () => {
+  it('is true for a running state', () => {
+    expect(isRunning(running)).toBe(true)
+  })
+
+  it('is false for a paused state', () => {
+    expect(isRunning(paused)).toBe(false)
+  })
+
+  it('is false for an idle state', () => {
+    expect(isRunning(INITIAL_STATE)).toBe(false)
+  })
+})
+
+describe('phaseDurationMs', () => {
+  it('uses the focus duration for the focus phase', () => {
+    expect(phaseDurationMs('focus', SETTINGS)).toBe(25 * MIN)
+  })
+
+  it('uses the break duration for the break phase', () => {
+    expect(phaseDurationMs('break', SETTINGS)).toBe(5 * MIN)
+  })
+})
 
 describe('start', () => {
   it('starts an idle phase using the configured duration', () => {
@@ -48,6 +90,12 @@ describe('pause', () => {
   it('stops the timer and stores the remaining time', () => {
     expect(paused.endsAt).toBeNull()
     expect(paused.pausedRemainingMs).toBe(15 * MIN)
+  })
+
+  it('stores zero remaining time when paused after endsAt', () => {
+    // The phase ended at 25 min, but the tick hadn't processed it yet when Pause was pressed.
+    const pausedLate = pause(running, 26 * MIN)
+    expect(pausedLate.pausedRemainingMs).toBe(0)
   })
 
   it('returns the same state when not running', () => {
@@ -142,16 +190,35 @@ describe('elapsedMs', () => {
 })
 
 describe('formatClock', () => {
-  it('formats minutes and seconds with zero padding', () => {
-    expect(formatClock(25 * MIN)).toBe('25:00')
-    expect(formatClock(61_000)).toBe('01:01')
+  it.each([
+    [0, '00:00'],
+    [9_000, '00:09'],
+    [61_000, '01:01'],
+    [5 * MIN + 12_000, '05:12'],
+    [25 * MIN, '25:00'],
+    [59 * MIN + 59_000, '59:59'],
+    [180 * MIN, '180:00'],
+  ])('formats %i ms as %s', (ms, expected) => {
+    expect(formatClock(ms)).toBe(expected)
   })
 
   it('rounds partial seconds up', () => {
     expect(formatClock(500)).toBe('00:01')
+    expect(formatClock(1_001)).toBe('00:02')
+  })
+})
+
+describe('saveTimerState', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
-  it('shows zero as 00:00', () => {
-    expect(formatClock(0)).toBe('00:00')
+  it('writes the state as JSON under the pomodoro:timer key', () => {
+    const setItem = vi.fn()
+    vi.stubGlobal('localStorage', { setItem })
+
+    saveTimerState(paused)
+
+    expect(setItem).toHaveBeenCalledWith('pomodoro:timer', JSON.stringify(paused))
   })
 })
