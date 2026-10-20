@@ -74,16 +74,20 @@ export const SOUNDS: Record<
  */
 export function prepareAlerts(): void {
   if ('Notification' in window && Notification.permission === 'default') {
-    void Notification.requestPermission()
+    Notification.requestPermission().catch((error) =>
+      console.error('Failed to request notification permission:', error),
+    )
   }
-  void getAudioContext().resume()
+  getAudioContext()
+    .resume()
+    .catch((error) => console.error('Failed to resume audio:', error))
 }
 
 export function alertPhaseComplete(finished: Phase, settings: Settings): void {
   playSound(settings.sound, settings.volume)
   const title = finished === 'focus' ? 'Focus session complete' : 'Break is over'
   const body = finished === 'focus' ? 'Time for a break.' : 'Ready for the next focus session?'
-  void showNotification(title, body)
+  showNotification(title, body).catch((error) => console.error('Failed to show notification:', error))
 }
 
 async function showNotification(title: string, body: string): Promise<void> {
@@ -108,7 +112,7 @@ const ATTACK_SECONDS = 0.02
 /** Play a sound at the given volume (0-100). Also used for the preview in settings. */
 export function playSound(sound: SoundId, volume: number): void {
   const ctx = getAudioContext()
-  void ctx.resume()
+  ctx.resume().catch((error) => console.error('Failed to resume audio:', error))
 
   // Squared, so the low end of the slider is much quieter than a straight line would be.
   const peakGain = (volume / 100) ** 2 * MAX_GAIN

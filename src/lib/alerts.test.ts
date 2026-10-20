@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { playSound } from './alerts'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { alertPhaseComplete, playSound, prepareAlerts } from './alerts'
+import { DEFAULT_SETTINGS } from './settings'
 
 const CURRENT_TIME = 10
 
@@ -45,20 +46,46 @@ function createFakeGain() {
 // alerts.ts creates its AudioContext once and keeps it, so every test shares this one
 // fake and starts from a cleared record of what was created.
 const fake = createFakeAudioContext()
-vi.stubGlobal(
-  'AudioContext',
-  vi.fn(function () {
-    return fake.ctx
-  }),
-)
+
+beforeEach(() => {
+  fake.oscillators.length = 0
+  fake.gains.length = 0
+  vi.clearAllMocks()
+  vi.stubGlobal(
+    'AudioContext',
+    vi.fn(function () {
+      return fake.ctx
+    }),
+  )
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+function stubNotification(permission: NotificationPermission) {
+  const NotificationMock = Object.assign(
+    vi.fn(function () {}),
+    { permission, requestPermission: vi.fn(() => Promise.resolve(permission)) },
+  )
+  vi.stubGlobal('Notification', NotificationMock)
+  vi.stubGlobal('window', { Notification: NotificationMock })
+  return NotificationMock
+}
+
+function stubNoNotificationSupport() {
+  vi.stubGlobal('window', {})
+}
+
+function stubServiceWorker(registration: unknown) {
+  vi.stubGlobal('navigator', { serviceWorker: { getRegistration: () => Promise.resolve(registration) } })
+}
+
+const silenceConsoleError = () => vi.spyOn(console, 'error').mockImplementation(() => {})
+const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('playSound', () => {
-  beforeEach(() => {
-    fake.oscillators.length = 0
-    fake.gains.length = 0
-    vi.clearAllMocks()
-  })
-
   it('plays nothing at volume 0', () => {
     playSound('chime', 0)
 
@@ -105,5 +132,154 @@ describe('playSound', () => {
 
     const [attack] = fake.gains[0].gain.exponentialRampToValueAtTime.mock.calls
     expect(attack[0]).toBeCloseTo(expectedPeak)
+  })
+
+  it('still plays and logs the error when the audio context cannot be resumed', async () => {
+    const consoleError = silenceConsoleError()
+    fake.ctx.resume.mockReturnValueOnce(Promise.reject(new Error('blocked')))
+
+    playSound('bell', 70)
+    await flushPromises()
+
+    expect(fake.oscillators).toHaveLength(1)
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+})
+
+describe('prepareAlerts', () => {
+  it('requests notification permission when it has not been decided', () => {
+    const NotificationMock = stubNotification('default')
+
+    prepareAlerts()
+
+    expect(NotificationMock.requestPermission).toHaveBeenCalledOnce()
+  })
+
+  it.each(['granted', 'denied'] as const)('does not request permission when it is already %s', (permission) => {
+    const NotificationMock = stubNotification(permission)
+
+    prepareAlerts()
+
+    expect(NotificationMock.requestPermission).not.toHaveBeenCalled()
+  })
+
+  it('resumes the audio context', () => {
+    stubNotification('granted')
+
+    prepareAlerts()
+
+    expect(fake.ctx.resume).toHaveBeenCalledOnce()
+  })
+
+  it('still resumes the audio context when notifications are unsupported', () => {
+    stubNoNotificationSupport()
+
+    expect(() => prepareAlerts()).not.toThrow()
+    expect(fake.ctx.resume).toHaveBeenCalledOnce()
+  })
+
+  it('does not throw and logs the error when the permission request fails', async () => {
+    const consoleError = silenceConsoleError()
+    const NotificationMock = stubNotification('default')
+    NotificationMock.requestPermission.mockReturnValueOnce(Promise.reject(new Error('blocked')))
+
+    expect(() => prepareAlerts()).not.toThrow()
+    await flushPromises()
+
+    expect(consoleError).toHaveBeenCalledOnce()
+  })
+})
+
+describe('alertPhaseComplete', () => {
+  const settings = { ...DEFAULT_SETTINGS, sound: 'bell' as const, volume: 70 }
+
+  it("plays the settings' sound", () => {
+    stubNoNotificationSupport()
+
+    alertPhaseComplete('focus', settings)
+
+    expect(fake.oscillators).toHaveLength(1)
+    expect(fake.oscillators[0].type).toBe('triangle')
+  })
+
+  describe('notification', () => {
+    const registration = () => ({ showNotification: vi.fn(() => Promise.resolve()) })
+
+    it.each([
+      ['focus', 'Focus session complete', 'Time for a break.'],
+      ['break', 'Break is over', 'Ready for the next focus session?'],
+    ] as const)('after a %s phase the title is "%s"', async (finished, title, body) => {
+      stubNotification('granted')
+      const reg = registration()
+      stubServiceWorker(reg)
+
+      alertPhaseComplete(finished, settings)
+      await flushPromises()
+
+      expect(reg.showNotification).toHaveBeenCalledWith(title, expect.objectContaining({ body }))
+    })
+
+    it('is not shown when notifications are unsupported', async () => {
+      stubNoNotificationSupport()
+      const reg = registration()
+      stubServiceWorker(reg)
+
+      alertPhaseComplete('focus', settings)
+      await flushPromises()
+
+      expect(reg.showNotification).not.toHaveBeenCalled()
+    })
+
+    it.each(['default', 'denied'] as const)('is not shown when permission is %s', async (permission) => {
+      const NotificationMock = stubNotification(permission)
+      const reg = registration()
+      stubServiceWorker(reg)
+
+      alertPhaseComplete('focus', settings)
+      await flushPromises()
+
+      expect(reg.showNotification).not.toHaveBeenCalled()
+      expect(NotificationMock).not.toHaveBeenCalled()
+    })
+
+    it('goes through the service worker when one is registered', async () => {
+      const NotificationMock = stubNotification('granted')
+      const reg = registration()
+      stubServiceWorker(reg)
+
+      alertPhaseComplete('focus', settings)
+      await flushPromises()
+
+      expect(reg.showNotification).toHaveBeenCalledWith('Focus session complete', {
+        body: 'Time for a break.',
+        icon: '/pwa-192x192.png',
+        tag: 'pomodoro',
+      })
+      expect(NotificationMock).not.toHaveBeenCalled()
+    })
+
+    it('falls back to a plain notification when no service worker is registered', async () => {
+      const NotificationMock = stubNotification('granted')
+      stubServiceWorker(undefined)
+
+      alertPhaseComplete('focus', settings)
+      await flushPromises()
+
+      expect(NotificationMock).toHaveBeenCalledWith('Focus session complete', {
+        body: 'Time for a break.',
+        tag: 'pomodoro',
+      })
+    })
+
+    it('does not throw and logs the error when showing it fails', async () => {
+      const consoleError = silenceConsoleError()
+      stubNotification('granted')
+      stubServiceWorker({ showNotification: () => Promise.reject(new Error('blocked')) })
+
+      expect(() => alertPhaseComplete('focus', settings)).not.toThrow()
+      await flushPromises()
+
+      expect(consoleError).toHaveBeenCalledOnce()
+    })
   })
 })

@@ -45,10 +45,10 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 
 ### alerts.ts (browser APIs: mock `AudioContext` and `Notification`)
 - [x] `playSound`: volume 0 plays nothing; volume maps to gain; one oscillator per note with the right wave and frequency
-- [ ] `SOUNDS`: every `SoundId` has an entry (guards against adding a sound id without a definition)
-- [ ] `prepareAlerts`: requests permission only when `default`; resumes the audio context; safe when `Notification` is missing
-- [ ] `alertPhaseComplete`: plays the sound with settings, correct title/body for focus vs break
-- [ ] `showNotification` (via `alertPhaseComplete`): nothing when unsupported or not granted; uses the service worker if registered; falls back to `new Notification`
+- `SOUNDS`: no runtime test, since the `Record<SoundId, ...>` type already enforces an entry per sound id
+- [x] `prepareAlerts`: requests permission only when `default`; resumes the audio context; safe when `Notification` is missing; logs when the request fails
+- [x] `alertPhaseComplete`: plays the sound with settings, correct title/body for focus vs break
+- [x] `showNotification` (via `alertPhaseComplete`): nothing when unsupported or not granted; uses the service worker if registered; falls back to `new Notification`; logs when showing fails
 
 ### theme.ts, utils.ts
 - No logic worth testing (static copy and a re-export).

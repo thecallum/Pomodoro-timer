@@ -25,7 +25,9 @@ export function useNotificationPermission() {
 
   function request() {
     if (!('Notification' in window)) return
-    void Notification.requestPermission().then(() => setPermission(current()))
+    Notification.requestPermission()
+      .then(() => setPermission(current()))
+      .catch((error) => console.error('Failed to request notification permission:', error))
   }
 
   return [permission, request] as const
