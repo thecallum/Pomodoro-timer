@@ -97,23 +97,43 @@ async function showNotification(title: string, body: string): Promise<void> {
   }
 }
 
+/** Leaves headroom so the loudest setting doesn't clip. */
+const MAX_GAIN = 0.5
+
+/** Exponential ramps can't touch 0, so notes fade in from and out to this instead. */
+const SILENT_GAIN = 0.0001
+
+const ATTACK_SECONDS = 0.02
+
 /** Play a sound at the given volume (0-100). Also used for the preview in settings. */
 export function playSound(sound: SoundId, volume: number): void {
   const ctx = getAudioContext()
   void ctx.resume()
-  const peak = (volume / 100) ** 2 * 0.5
-  if (peak <= 0) return
-  for (const note of SOUNDS[sound].notes) {
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    const t0 = ctx.currentTime + note.at
-    osc.type = SOUNDS[sound].wave
-    osc.frequency.value = note.frequency
-    gain.gain.setValueAtTime(0.0001, t0)
-    gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.02)
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + note.duration)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start(t0)
-    osc.stop(t0 + note.duration)
+
+  // Squared, so the low end of the slider is much quieter than a straight line would be.
+  const peakGain = (volume / 100) ** 2 * MAX_GAIN
+  const isSilent = peakGain <= 0
+  if (isSilent) return
+
+  const { wave, notes } = SOUNDS[sound]
+  for (const note of notes) {
+    playNote(ctx, wave, note, peakGain)
   }
+}
+
+function playNote(ctx: AudioContext, wave: OscillatorType, note: Note, peakGain: number): void {
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  const startTime = ctx.currentTime + note.at
+  const endTime = startTime + note.duration
+
+  osc.type = wave
+  osc.frequency.value = note.frequency
+  gain.gain.setValueAtTime(SILENT_GAIN, startTime)
+  gain.gain.exponentialRampToValueAtTime(peakGain, startTime + ATTACK_SECONDS)
+  gain.gain.exponentialRampToValueAtTime(SILENT_GAIN, endTime)
+
+  osc.connect(gain).connect(ctx.destination)
+  osc.start(startTime)
+  osc.stop(endTime)
 }

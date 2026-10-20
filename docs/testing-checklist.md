@@ -44,7 +44,7 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] `saveAppearance`: writes the value under `pomodoro:appearance`, logs and does not throw when storage fails
 
 ### alerts.ts (browser APIs: mock `AudioContext` and `Notification`)
-- [ ] `playSound`: volume 0 plays nothing; volume maps to gain; one oscillator per note with the right wave and frequency
+- [x] `playSound`: volume 0 plays nothing; volume maps to gain; one oscillator per note with the right wave and frequency
 - [ ] `SOUNDS`: every `SoundId` has an entry (guards against adding a sound id without a definition)
 - [ ] `prepareAlerts`: requests permission only when `default`; resumes the audio context; safe when `Notification` is missing
 - [ ] `alertPhaseComplete`: plays the sound with settings, correct title/body for focus vs break
