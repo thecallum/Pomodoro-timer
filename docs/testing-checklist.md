@@ -122,11 +122,11 @@ Render `<App />` in a `MemoryRouter` (`renderApp` in `src/test-utils.tsx`) with 
 - [x] Changed focus/break length shows on an idle timer; a running session is unaffected and the next start uses the new length
 - [x] `document.title`: idle, running, paused, break, back to idle
 
-## E2E (Playwright, real browser) — set up with a smoke test only (`e2e/smoke.spec.ts`, run with `pnpm test:e2e`)
+## E2E (Playwright, real browser, production build) — run with `pnpm test:e2e`
 
-Things jsdom can't check. Not planned yet.
+Things jsdom can't check. Kept to a few happy paths.
 
-- [ ] Start a timer, reload the page, and it is still running
-- [ ] Choose dark in settings, reload, and the page loads dark with no flash (the inline script in `index.html`)
-- [ ] Complete a short session (1 minute focus) and Today updates
-- [ ] Installs as a PWA and works offline
+- [x] Start a timer, reload the page, and it is still running (`e2e/timer-page.spec.ts`)
+- [x] Complete a short session (1 minute focus, Playwright clock) and Today updates (`e2e/timer-page.spec.ts`)
+- [x] A saved dark appearance is applied by the inline script in `index.html` before the app's scripts load (`e2e/appearance.spec.ts`)
+- [x] App loads offline once the service worker has cached it (`e2e/pwa.spec.ts`)
