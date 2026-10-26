@@ -81,12 +81,12 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] `update` changes state and persists
 
 ### useAppearance
-- [ ] Initial value from storage, default `system`
-- [ ] `update` changes state and persists
-- [ ] Toggles the `dark` class and `color-scheme` on `<html>` for light/dark
-- [ ] `system` follows `matchMedia`, including live changes
-- [ ] Updates the `theme-color` meta tag
-- [ ] Removes the media listener on unmount / when appearance changes
+- [x] Initial value from storage, default `system`
+- [x] `update` changes state and persists
+- [x] Toggles the `dark` class and `color-scheme` on `<html>` for light/dark
+- [x] `system` follows `matchMedia`, including live changes
+- [x] Updates the `theme-color` meta tag
+- [x] Removes the media listener on unmount / when appearance changes
 
 ### useNotificationPermission
 - [ ] Returns `unsupported` when `Notification` is missing
