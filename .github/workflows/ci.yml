@@ -51,6 +51,19 @@ jobs:
           name: playwright-traces
           path: test-results/
 
+  # Reports high/critical advisories without blocking: deploy doesn't depend on it
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - run: pnpm audit --audit-level high
+
   # Placeholder until a deploy target is chosen
   deploy:
     needs: [test, e2e]
