@@ -89,12 +89,12 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] Removes the media listener on unmount / when appearance changes
 
 ### useNotificationPermission
-- [ ] Returns `unsupported` when `Notification` is missing
-- [ ] Returns the current permission
-- [ ] `request` asks for permission and updates the state
-- [ ] Updates when the browser permission status changes
-- [ ] Copes with `navigator.permissions` missing or rejecting
-- [ ] Removes the listener on unmount
+- [x] Returns `unsupported` when `Notification` is missing
+- [x] Returns the current permission
+- [x] `request` asks for permission and updates the state
+- [x] Updates when the browser permission status changes
+- [x] Copes with `navigator.permissions` missing or rejecting
+- [x] Removes the listener on unmount
 
 ## Integration (RTL, real components) — to detail once the hook tests are done
 
