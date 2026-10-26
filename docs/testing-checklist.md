@@ -122,9 +122,9 @@ Render `<App />` in a `MemoryRouter` (`renderApp` in `src/test-utils.tsx`) with 
 - [x] Changed focus/break length shows on an idle timer; a running session is unaffected and the next start uses the new length
 - [x] `document.title`: idle, running, paused, break, back to idle
 
-## E2E (real browser, e.g. Playwright) — not started
+## E2E (Playwright, real browser) — set up with a smoke test only (`e2e/smoke.spec.ts`, run with `pnpm test:e2e`)
 
-Things jsdom can't check. Needs Playwright set up first.
+Things jsdom can't check. Not planned yet.
 
 - [ ] Start a timer, reload the page, and it is still running
 - [ ] Choose dark in settings, reload, and the page loads dark with no flash (the inline script in `index.html`)
