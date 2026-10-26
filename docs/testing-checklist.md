@@ -96,13 +96,37 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 - [x] Copes with `navigator.permissions` missing or rejecting
 - [x] Removes the listener on unmount
 
-## Integration (RTL, real components) — to detail once the hook tests are done
+## Integration (RTL, jsdom, real components and hooks)
 
-- [ ] TimerPage: start, pause, resume, skip buttons and the clock display
-- [ ] TimerPage: today's stats update after a completed focus session
-- [ ] TimerPage: heading and hint change between focus and break
-- [ ] SettingsPage: change focus/break minutes (valid, invalid input, boundaries) and see them saved
-- [ ] SettingsPage: change volume and sound, preview plays, values persist to localStorage
-- [ ] SettingsPage: appearance setting switches theme
-- [ ] SettingsPage: notification permission states (granted, denied, default, unsupported)
-- [ ] App: routing between timer and settings; settings changes affect the timer
+Render `<App />` in a `MemoryRouter` (`renderApp` in `src/test-utils.tsx`) with real hooks and real `localStorage`. Only browser edges are faked: audio/alerts, `Notification`, `matchMedia` and timers. Timer-driven files use `fireEvent` because user-event hangs under vitest's fake timers.
+
+### TimerPage (`src/pages/TimerPage.test.tsx`)
+- [x] Fresh timer: focus heading and hint, `25:00`, "Start focus", nothing done today
+- [x] Start: clock counts down, button becomes Pause
+- [x] Pause freezes the clock and shows Resume and "Paused"; Resume carries on from where it stopped
+- [x] Skip: idle focus to idle break, and break back to focus
+- [x] Skip part way through focus adds the time to today without a completed session
+- [x] Focus runs out: idle break, completed session in today's stats (singular and plural), alert sounded
+- [x] Break runs out: idle focus, today unchanged
+
+### SettingsPage (`src/pages/SettingsPage.test.tsx`)
+- [x] Focus/break length: shows current, saves valid, boundaries (1, 180), rejects empty/0/181/decimal, blur restores the last saved value
+- [x] Volume: shows and saves; preview on release (pointer and key) at the new volume, not while dragging
+- [x] Sound: selection saved and previewed; play button previews the current sound
+- [x] Appearance: selection switches the `dark` class on `<html>` and is saved
+- [x] Notifications: default (with Enable), enabling, granted, denied (with help text), unsupported
+
+### App (`src/App.test.tsx`)
+- [x] Routing: timer by default, settings and Back, direct `/settings`, unknown path redirects
+- [x] Timer keeps running while on the settings page
+- [x] Changed focus/break length shows on an idle timer; a running session is unaffected and the next start uses the new length
+- [x] `document.title`: idle, running, paused, break, back to idle
+
+## E2E (real browser, e.g. Playwright) — not started
+
+Things jsdom can't check. Needs Playwright set up first.
+
+- [ ] Start a timer, reload the page, and it is still running
+- [ ] Choose dark in settings, reload, and the page loads dark with no flash (the inline script in `index.html`)
+- [ ] Complete a short session (1 minute focus) and Today updates
+- [ ] Installs as a PWA and works offline
