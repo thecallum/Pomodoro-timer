@@ -64,10 +64,36 @@ jobs:
 
       - run: pnpm audit --audit-level high
 
-  # Placeholder until a deploy target is chosen
+  # Pushes to main go to production; pull requests get a preview URL.
+  # Fork PRs are skipped because GitHub doesn't give them the Cloudflare secrets.
   deploy:
     needs: [test, e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deployment not set up yet"
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      # Pages treats the branch named "main" as production and any other as a preview
+      - id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy --branch=${{ github.head_ref || github.ref_name }}
+
+      - run: echo "Deployed to ${{ steps.deploy.outputs.deployment-url }}" >> "$GITHUB_STEP_SUMMARY"
