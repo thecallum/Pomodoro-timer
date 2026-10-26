@@ -50,6 +50,24 @@ describe('today', () => {
   })
 })
 
+describe('allTime', () => {
+  it('is empty when no sessions are saved', () => {
+    const { result } = renderHook(() => useSessions())
+
+    expect(result.current.allTime).toEqual({ completedCount: 0, focusedMs: 0 })
+  })
+
+  it('summarises saved sessions from every day', () => {
+    const lastMonth = { ...session('old', 25 * MIN), endedAt: NOW - 30 * 24 * 60 * MIN }
+    seedSavedSessions([lastMonth, session('a', 25 * MIN), session('b', 10 * MIN, false)])
+
+    const { result } = renderHook(() => useSessions())
+
+    expect(result.current.allTime).toEqual({ completedCount: 2, focusedMs: 60 * MIN })
+    expect(result.current.today).toEqual({ completedCount: 1, focusedMs: 35 * MIN })
+  })
+})
+
 describe('record', () => {
   it("adds the session to today's summary", () => {
     const { result } = renderHook(() => useSessions())
@@ -57,6 +75,14 @@ describe('record', () => {
     act(() => result.current.record(session('a', 25 * MIN)))
 
     expect(result.current.today).toEqual({ completedCount: 1, focusedMs: 25 * MIN })
+  })
+
+  it("adds the session to the all time summary", () => {
+    const { result } = renderHook(() => useSessions())
+
+    act(() => result.current.record(session('a', 25 * MIN)))
+
+    expect(result.current.allTime).toEqual({ completedCount: 1, focusedMs: 25 * MIN })
   })
 
   it('saves the new session along with the existing ones', () => {

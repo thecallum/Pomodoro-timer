@@ -5,6 +5,7 @@ import {
   formatDuration,
   loadRecords,
   saveRecords,
+  summarizeAll,
   summarizeDay,
 } from './sessions'
 
@@ -38,6 +39,26 @@ describe('summarizeDay', () => {
 
   it('is zero when there are no sessions', () => {
     expect(summarizeDay([], at(12))).toEqual({ completedCount: 0, focusedMs: 0 })
+  })
+})
+
+describe('summarizeAll', () => {
+  it('counts completed sessions but sums time from skipped ones too', () => {
+    const records = [
+      record('a', at(9), 25 * MIN),
+      record('b', at(10), 25 * MIN),
+      record('c', at(11), 10 * MIN, false),
+    ]
+    expect(summarizeAll(records)).toEqual({ completedCount: 2, focusedMs: 60 * MIN })
+  })
+
+  it('includes sessions from every day', () => {
+    const records = [record('earlier', at(9, 0, 1), 25 * MIN), record('later', at(9, 0, 28), 25 * MIN)]
+    expect(summarizeAll(records)).toEqual({ completedCount: 2, focusedMs: 50 * MIN })
+  })
+
+  it('is zero when there are no sessions', () => {
+    expect(summarizeAll([])).toEqual({ completedCount: 0, focusedMs: 0 })
   })
 })
 
