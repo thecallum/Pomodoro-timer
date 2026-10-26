@@ -56,29 +56,29 @@ Legend: `[x]` covered by an existing test, `[ ]` not yet covered. Ticks are base
 ## Hooks (`src/hooks/`, `renderHook` plus fake timers)
 
 ### useTimer (highest value)
-- [ ] Initial state: idle focus phase with full duration
-- [ ] `start`: becomes running, calls `prepareAlerts`, remaining counts down as time advances
-- [ ] `pause` then `start`: remaining frozen while paused, resumes from there
-- [ ] Phase runs out (focus): moves to idle break, records a completed session, plays the alert
-- [ ] Phase runs out (break): moves to idle focus, records no session, plays the alert
-- [ ] `skip` during focus after 1s or more: records a skipped session with elapsed time, no alert
-- [ ] `skip` during focus under 1s, during idle, or during break: records nothing
-- [ ] `skip` while paused: elapsed excludes paused time
-- [ ] Changing settings mid-phase doesn't change the running phase; applies on next start
-- [ ] State persists: reloading (re-mounting) restores running/paused state
-- [ ] Reload after a focus phase expired: rolls over to break and records the session once (including under StrictMode)
-- [ ] Reload after a break expired: rolls over to focus, no session
-- [ ] Interval is cleaned up on unmount and when not running
+- [x] Initial state: idle focus phase with full duration
+- [x] `start`: becomes running, calls `prepareAlerts`, remaining counts down as time advances
+- [x] `pause` then `start`: remaining frozen while paused, resumes from there
+- [x] Phase runs out (focus): moves to idle break, records a completed session, plays the alert
+- [x] Phase runs out (break): moves to idle focus, records no session, plays the alert
+- [x] `skip` during focus after 1s or more: records a skipped session with elapsed time, no alert
+- [x] `skip` during focus under 1s, during idle, or during break: records nothing
+- [x] `skip` while paused: elapsed excludes paused time
+- [x] Changing settings mid-phase doesn't change the running phase; applies on next start
+- [x] State persists: reloading (re-mounting) restores running/paused state
+- [x] Reload after a focus phase expired: rolls over to break and records the session once (including under StrictMode)
+- [x] Reload after a break expired: rolls over to focus, no session
+- [x] Interval is cleaned up on unmount and when not running
 
 ### useSessions
-- [ ] Loads existing records from storage
-- [ ] `record` adds a session, updates `today`, and persists
-- [ ] Recording the same id twice doesn't duplicate or re-save
+- [x] Loads existing records from storage
+- [x] `record` adds a session, updates `today`, and persists
+- [x] Recording the same id twice doesn't duplicate or re-save
 - [ ] `today` excludes records from other days
 
 ### useSettings
-- [ ] Returns loaded settings (defaults when empty)
-- [ ] `update` changes state and persists
+- [x] Returns loaded settings (defaults when empty)
+- [x] `update` changes state and persists
 
 ### useAppearance
 - [ ] Initial value from storage, default `system`
