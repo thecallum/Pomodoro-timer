@@ -25,7 +25,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<TimerPage timer={timer} today={sessions.today} />} />
+      <Route path="/" element={<TimerPage timer={timer} today={sessions.today} allTime={sessions.allTime} />} />
       <Route
         path="/settings"
         element={

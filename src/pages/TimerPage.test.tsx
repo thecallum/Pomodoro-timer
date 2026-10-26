@@ -16,7 +16,9 @@ const NOW = new Date(2026, 9, 14, 12, 0).getTime()
 const advance = (ms: number) => act(() => vi.advanceTimersByTime(ms))
 // fireEvent rather than user-event: user-event's async waits hang under vitest's fake timers.
 const clickButton = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
-const todaySummary = () => screen.getByText(/completed session/)
+const summaryFor = (label: string) => screen.getByText(label, { selector: 'dt' }).nextElementSibling
+const todaySummary = () => summaryFor('Today')
+const allTimeSummary = () => summaryFor('All time')
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -43,6 +45,25 @@ describe('a fresh timer', () => {
     renderApp()
 
     expect(todaySummary()).toHaveTextContent('0 completed sessions·0s focused')
+  })
+
+  it('shows nothing done all time', () => {
+    renderApp()
+
+    expect(allTimeSummary()).toHaveTextContent('0 completed sessions·0s focused')
+  })
+
+  it('shows sessions saved from earlier days in all time but not today', () => {
+    const lastWeek = NOW - 7 * 24 * 60 * MIN
+    localStorage.setItem(
+      'pomodoro:sessions',
+      JSON.stringify([{ id: 'old', endedAt: lastWeek, focusedMs: 25 * MIN, completed: true }]),
+    )
+
+    renderApp()
+
+    expect(todaySummary()).toHaveTextContent('0 completed sessions·0s focused')
+    expect(allTimeSummary()).toHaveTextContent('1 completed session·25m 0s focused')
   })
 })
 
@@ -130,6 +151,7 @@ describe('skip', () => {
     clickButton('Skip')
 
     expect(todaySummary()).toHaveTextContent('0 completed sessions·10s focused')
+    expect(allTimeSummary()).toHaveTextContent('0 completed sessions·10s focused')
   })
 })
 
@@ -152,6 +174,7 @@ describe('a phase running out', () => {
     advance(25 * MIN)
 
     expect(todaySummary()).toHaveTextContent('1 completed session·25m 0s focused')
+    expect(allTimeSummary()).toHaveTextContent('1 completed session·25m 0s focused')
   })
 
   it('adds up several completed sessions', () => {
@@ -163,6 +186,7 @@ describe('a phase running out', () => {
     }
 
     expect(todaySummary()).toHaveTextContent('2 completed sessions·50m 0s focused')
+    expect(allTimeSummary()).toHaveTextContent('2 completed sessions·50m 0s focused')
   })
 
   it('moves a finished break to an idle focus without changing today', () => {
@@ -175,6 +199,7 @@ describe('a phase running out', () => {
     expect(screen.getByRole('heading', { name: 'Focus' })).toBeInTheDocument()
     expect(screen.getByText('25:00')).toBeInTheDocument()
     expect(todaySummary()).toHaveTextContent('0 completed sessions·0s focused')
+    expect(allTimeSummary()).toHaveTextContent('0 completed sessions·0s focused')
   })
 
   it('sounds the alert', () => {

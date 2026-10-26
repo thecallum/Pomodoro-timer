@@ -9,9 +9,10 @@ import { formatClock } from '@/lib/timer'
 interface Props {
   timer: ReturnType<typeof useTimer>
   today: DaySummary
+  allTime: DaySummary
 }
 
-export function TimerPage({ timer, today }: Props) {
+export function TimerPage({ timer, today, allTime }: Props) {
   const navigate = useNavigate()
   const theme = THEME[timer.phase]
   const clock = formatClock(timer.remainingMs)
@@ -70,14 +71,24 @@ export function TimerPage({ timer, today }: Props) {
         </Button>
       </div>
 
-      <dl className="absolute bottom-4 left-4 text-sm text-phase-muted">
-        <dt className="text-xs tracking-widest uppercase">Today</dt>
-        <dd className="mt-1 tabular-nums">
-          {today.completedCount} {today.completedCount === 1 ? 'completed session' : 'completed sessions'}
-          <span aria-hidden className="mx-1.5">·</span>
-          {formatDuration(today.focusedMs)} focused
-        </dd>
+      <dl className="absolute bottom-4 left-4 flex items-end gap-3 text-sm text-phase-muted">
+        <SummaryRow label="Today" summary={today} />
+        <span aria-hidden>·</span>
+        <SummaryRow label="All time" summary={allTime} />
       </dl>
     </main>
+  )
+}
+
+function SummaryRow({ label, summary }: { label: string; summary: DaySummary }) {
+  return (
+    <div>
+      <dt className="text-xs tracking-widest uppercase">{label}</dt>
+      <dd className="mt-1 tabular-nums">
+        {summary.completedCount} {summary.completedCount === 1 ? 'completed session' : 'completed sessions'}
+        <span aria-hidden className="mx-1.5">·</span>
+        {formatDuration(summary.focusedMs)} focused
+      </dd>
+    </div>
   )
 }

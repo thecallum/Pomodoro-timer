@@ -11,7 +11,7 @@ test.describe('timer page sessions', () => {
     await expect(page.getByRole('heading', { name: 'Focus' })).toBeVisible()
   })
 
-  test('a completed focus session shows up in todays stats', async ({ page }) => {
+  test('a completed focus session shows up in today and all time stats', async ({ page }) => {
     await page.clock.install()
     await page.goto('/')
     await page.getByRole('button', { name: 'Settings' }).click()
@@ -22,6 +22,9 @@ test.describe('timer page sessions', () => {
     await page.clock.runFor('01:00')
 
     await expect(page.getByRole('heading', { name: 'Break' })).toBeVisible()
-    await expect(page.getByText(/completed session/)).toHaveText(/1 completed session.*1m 0s focused/)
+    for (const label of ['Today', 'All time']) {
+      const summary = page.getByText(label, { exact: true }).locator('xpath=following-sibling::dd')
+      await expect(summary).toHaveText(/1 completed session.*1m 0s focused/)
+    }
   })
 })

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { type SessionRecord, addRecord, loadRecords, saveRecords, summarizeDay } from '@/lib/sessions'
+import { type SessionRecord, addRecord, loadRecords, saveRecords, summarizeAll, summarizeDay } from '@/lib/sessions'
 
 export function useSessions() {
   const [records, setRecords] = useState<SessionRecord[]>(loadRecords)
@@ -12,5 +12,5 @@ export function useSessions() {
     })
   }, [])
 
-  return { today: summarizeDay(records, Date.now()), record }
+  return { today: summarizeDay(records, Date.now()), allTime: summarizeAll(records), record }
 }

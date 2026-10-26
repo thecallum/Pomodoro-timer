@@ -29,10 +29,13 @@ export function summarizeDay(records: SessionRecord[], day: number): DaySummary 
   end.setDate(end.getDate() + 1)
   const endMs = end.getTime()
 
+  return summarizeAll(records.filter((r) => r.endedAt >= startMs && r.endedAt < endMs))
+}
+
+export function summarizeAll(records: SessionRecord[]): DaySummary {
   let completedCount = 0
   let focusedMs = 0
   for (const r of records) {
-    if (r.endedAt < startMs || r.endedAt >= endMs) continue
     focusedMs += r.focusedMs
     if (r.completed) completedCount += 1
   }
