@@ -1,33 +1,79 @@
-import { describe, expect, it, vi } from 'vitest'
-import { DEFAULT_SETTINGS, loadSettings, parseMinutes } from './settings'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_SETTINGS, loadSettings, parseMinutes, saveSettings } from './settings'
 
 describe('parseMinutes', () => {
-  it('accepts whole numbers in range', () => {
-    expect(parseMinutes('25')).toBe(25)
-    expect(parseMinutes(' 1 ')).toBe(1)
-    expect(parseMinutes('180')).toBe(180)
+  it.each([
+    ['25', 25],
+    [' 1 ', 1],
+    ['180', 180],
+  ])('accepts %j as %i minutes', (input, expected) => {
+    expect(parseMinutes(input)).toBe(expected)
   })
 
-  it('rejects empty, zero, out of range, and non-integers', () => {
-    for (const input of ['', '0', '181', '-5', '2.5', '1e2', 'abc']) {
-      expect(parseMinutes(input)).toBeNull()
-    }
+  it.each([
+    ['empty', ''],
+    ['zero', '0'],
+    ['above the maximum', '181'],
+    ['negative', '-5'],
+    ['a decimal', '2.5'],
+    ['scientific notation', '1e2'],
+    ['text', 'abc'],
+  ])('rejects %s', (_label, input) => {
+    expect(parseMinutes(input)).toBeNull()
   })
 })
 
 describe('loadSettings', () => {
-  const store = new Map<string, string>()
-  vi.stubGlobal('localStorage', {
-    getItem: (k: string) => store.get(k) ?? null,
+  const seed = (value: unknown) => {
+    vi.stubGlobal('localStorage', { getItem: () => JSON.stringify(value) })
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('returns the defaults when nothing is saved', () => {
+    vi.stubGlobal('localStorage', { getItem: () => null })
+    expect(loadSettings()).toEqual(DEFAULT_SETTINGS)
+  })
+
+  it('returns the defaults and logs the error when the saved data cannot be read', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('localStorage', { getItem: () => '{not json' })
+
+    expect(loadSettings()).toEqual(DEFAULT_SETTINGS)
+    expect(consoleError).toHaveBeenCalledOnce()
   })
 
   it('falls back to defaults for settings saved before sound options existed', () => {
-    store.set('pomodoro:settings', JSON.stringify({ focusMinutes: 30, breakMinutes: 10 }))
+    seed({ focusMinutes: 30, breakMinutes: 10 })
     expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, focusMinutes: 30, breakMinutes: 10 })
   })
 
-  it('clamps volume and rejects unknown sounds', () => {
-    store.set('pomodoro:settings', JSON.stringify({ volume: 250, sound: 'kazoo' }))
-    expect(loadSettings()).toMatchObject({ volume: 100, sound: DEFAULT_SETTINGS.sound })
+  it('clamps volume to 100', () => {
+    seed({ volume: 250 })
+    expect(loadSettings().volume).toBe(100)
+  })
+
+  it('rejects unknown sounds', () => {
+    seed({ sound: 'kazoo' })
+    expect(loadSettings().sound).toBe(DEFAULT_SETTINGS.sound)
+  })
+})
+
+describe('saveSettings', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('writes the settings as JSON under the pomodoro:settings key', () => {
+    const setItem = vi.fn()
+    vi.stubGlobal('localStorage', { setItem })
+    const settings = { focusMinutes: 30, breakMinutes: 10, volume: 40, sound: 'bell' as const }
+
+    saveSettings(settings)
+
+    expect(setItem).toHaveBeenCalledWith('pomodoro:settings', JSON.stringify(settings))
   })
 })

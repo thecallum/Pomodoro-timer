@@ -48,7 +48,14 @@ export function start(state: TimerState, now: number, settings: Settings): Timer
 
 export function pause(state: TimerState, now: number): TimerState {
   if (state.endsAt === null) return state
-  return { ...state, endsAt: null, pausedRemainingMs: Math.max(0, state.endsAt - now) }
+
+  // The phase can already be over by the time pause is called: the tick that ends it only
+  // runs every 250ms (and browsers throttle background tabs much harder), so the user can
+  // press Pause just after endsAt but before the tick has moved on to the next phase.
+  // Clamp to 0 so we never store negative time, which would put endsAt in the past on resume.
+  const remainingMs = Math.max(0, state.endsAt - now)
+
+  return { ...state, endsAt: null, pausedRemainingMs: remainingMs }
 }
 
 export function remainingMs(state: TimerState, now: number, settings: Settings): number {
@@ -103,7 +110,8 @@ export function loadTimerState(): TimerState {
         ? parsed.durationMs
         : null
     return { phase, endsAt, pausedRemainingMs, durationMs }
-  } catch {
+  } catch (error) {
+    console.error('Failed to load timer state, starting fresh:', error)
     return INITIAL_STATE
   }
 }

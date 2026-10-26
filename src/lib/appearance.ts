@@ -13,7 +13,8 @@ export function loadAppearance(): Appearance {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return APPEARANCES.find((a) => a === raw) ?? 'system'
-  } catch {
+  } catch (error) {
+    console.error('Failed to load appearance, using system:', error)
     return 'system'
   }
 }
@@ -21,7 +22,8 @@ export function loadAppearance(): Appearance {
 export function saveAppearance(appearance: Appearance): void {
   try {
     localStorage.setItem(STORAGE_KEY, appearance)
-  } catch {
+  } catch (error) {
     // Storage unavailable (e.g. private mode): the choice just won't persist.
+    console.error('Failed to save appearance:', error)
   }
 }

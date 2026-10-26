@@ -41,7 +41,8 @@ export function loadSettings(): Settings {
         ? (parsed.sound as SoundId)
         : DEFAULT_SETTINGS.sound,
     }
-  } catch {
+  } catch (error) {
+    console.error('Failed to load settings, using defaults:', error)
     return DEFAULT_SETTINGS
   }
 }

@@ -19,13 +19,15 @@ export function useNotificationPermission() {
         status = s
         s.addEventListener('change', sync)
       })
-      .catch(() => {})
+      .catch((error) => console.error('Failed to query notification permission:', error))
     return () => status?.removeEventListener('change', sync)
   }, [])
 
   function request() {
     if (!('Notification' in window)) return
-    void Notification.requestPermission().then(() => setPermission(current()))
+    Notification.requestPermission()
+      .then(() => setPermission(current()))
+      .catch((error) => console.error('Failed to request notification permission:', error))
   }
 
   return [permission, request] as const
